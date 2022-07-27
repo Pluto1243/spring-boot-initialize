@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="false" scanPeriod="60 seconds">
+    <!-- 控制台 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <withJansi>true</withJansi>
+
+        <encoder>
+            <pattern>%d %green(%5level) --- [%-32thread] %msg --- %cyan(%-40logger{40}) %n</pattern>
+        </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <target>System.out</target>
+    </appender>
+
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <withJansi>true</withJansi>
+
+        <encoder>
+            <pattern>%d %red(%5level) --- [%-32thread] %msg --- %cyan(%-40logger{40}) %n</pattern>
+        </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <target>System.out</target>
+    </appender>
+
+    <!-- 滚动日志 -->
+    <appender name="ROLLLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d %5level --- [%-32thread] %msg --- %-40logger{40} %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 滚动错误日志 -->
+    <appender name="ERRROLLLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/%d{yyyy-MM-dd}-error.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d %5level --- [%-32thread] %msg --- %-40logger{40} %n</pattern>
+        </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 滚动警告日志 -->
+    <appender name="WARNROLLLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/%d{yyyy-MM-dd}-warn.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d %5level --- [%-32thread] %msg --- %-40logger{40} %n</pattern>
+        </encoder>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- lifecycle file logger -->
+    <appender name="LUDMILA_LIFECYCLE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/lifecycle.log</file>
+        <append>true</append>
+        <!-- 是否安全写入 -->
+        <prudent>true</prudent>
+        <encoder>
+            <pattern>%d %5level --- [%-32thread] %msg --- %-40logger{40} %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- main thread appender -->
+    <appender name="MAIN_THREAD_APPENDER" class="ch.qos.logback.core.FileAppender">
+        <file>logs/main-thread.log</file>
+        <append>false</append>
+        <prudent>false</prudent>
+        <encoder>
+            <pattern>%d %5level --- [%-32thread] %msg --- %-40logger{40} %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- lifecycle -->
+    <logger name="ludmila-lifecycle" additivity="false" level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDERR"/>
+        <appender-ref ref="ROLLLOG"/>
+        <appender-ref ref="WARNROLLLOG"/>
+        <appender-ref ref="ERRROLLLOG"/>
+        <appender-ref ref="LUDMILA_LIFECYCLE"/>
+        <appender-ref ref="MAIN_THREAD_APPENDER"/>
+    </logger>
+
+    <!-- mcg -->
+    <logger name="com.wj" additivity="false" level="debug">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDERR"/>
+        <appender-ref ref="ROLLLOG"/>
+        <appender-ref ref="WARNROLLLOG"/>
+        <appender-ref ref="ERRROLLLOG"/>
+        <appender-ref ref="MAIN_THREAD_APPENDER"/>
+    </logger>
+
+    <!-- vendor -->
+    <logger name="com.wj" additivity="false" level="debug">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDERR"/>
+        <appender-ref ref="ROLLLOG"/>
+        <appender-ref ref="WARNROLLLOG"/>
+        <appender-ref ref="ERRROLLLOG"/>
+        <appender-ref ref="MAIN_THREAD_APPENDER"/>
+    </logger>
+
+    <!-- 根日志 -->
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDERR"/>
+        <appender-ref ref="ROLLLOG"/>
+        <appender-ref ref="WARNROLLLOG"/>
+        <appender-ref ref="ERRROLLLOG"/>
+        <appender-ref ref="MAIN_THREAD_APPENDER"/>
+    </root>
+</configuration>
