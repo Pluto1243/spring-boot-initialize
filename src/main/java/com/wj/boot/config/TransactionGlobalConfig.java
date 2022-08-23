@@ -32,11 +32,11 @@ public class TransactionGlobalConfig {
      * 配置切入点表达式
      * 1.execution(): 表达式主体
      * 2.第一个*号:表示返回类型，*号表示所有的类型
-     * 3.com.fangchui.platform.service表示切入点的包名
+     * 3.com.wj.boot.service表示切入点的包名
      * 4.第二个*号:表示实现包
      * 5.*(..)*号表示所有方法名,..表示所有类型的参数
      */
-    private static final String AOP_POINTCUT_EXPRESSION = "execution(* com.fangchui.cooperation.service.*.*(..))";
+    private static final String AOP_POINTCUT_EXPRESSION = "execution(* com.wj.boot.service.*.*(..))";
 
     /** 配置超时时间 */
     private static final int TX_METHOD_TIME_OUT = 30;
