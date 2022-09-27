@@ -4,9 +4,8 @@ import com.wj.boot.entity.response.R;
 import com.wj.boot.utils.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,11 +20,10 @@ import java.util.Map;
  * @date 14:21 2022年07月26日
  **/
 @Slf4j
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    @ResponseBody
     public R doError(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Exception ex) {
         Map<String, Object> responseData = new HashMap<>(16);
         LogUtils.logToFile(ex);
