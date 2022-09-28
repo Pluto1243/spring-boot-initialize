@@ -42,7 +42,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     protected void addInterceptors(InterceptorRegistry registry) {
 
         // 放行路径
-        List<String> patterns = new ArrayList();
+        List<String> patterns = new ArrayList<>();
         patterns.add("/doc.html");
         patterns.add("/webjars/**");
         patterns.add("/favicon.ico");

@@ -23,23 +23,27 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String ERROR_CODE = "errCode";
+
+    private static final String ERROR_MSG = "errMsg";
+
     @ExceptionHandler(Exception.class)
-    public R doError(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Exception ex) {
+    public R<Map<String, Object>> doError(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Exception ex) {
         Map<String, Object> responseData = new HashMap<>(16);
         LogUtils.logToFile(ex);
         if (ex instanceof CommonException) {
             CommonException commonException = (CommonException) ex;
-            responseData.put("errCode", commonException.getErrCode());
-            responseData.put("errMsg", commonException.getErrMsg());
+            responseData.put(ERROR_CODE, commonException.getErrCode());
+            responseData.put(ERROR_MSG, commonException.getErrMsg());
         } else if (ex instanceof MethodArgumentNotValidException) {
-            responseData.put("errCode", "-1");
-            responseData.put("errMsg", ((MethodArgumentNotValidException) ex).getBindingResult().getFieldErrors().get(0).getDefaultMessage());
+            responseData.put(ERROR_CODE, "-1");
+            responseData.put(ERROR_MSG, ((MethodArgumentNotValidException) ex).getBindingResult().getFieldErrors().get(0).getDefaultMessage());
         } else if (ex instanceof ConstraintViolationException) {
-            responseData.put("errCode", "-1");
-            responseData.put("errMsg", ((ConstraintViolationException) ex).getConstraintViolations().iterator().next().getMessageTemplate());
+            responseData.put(ERROR_CODE, "-1");
+            responseData.put(ERROR_MSG, ((ConstraintViolationException) ex).getConstraintViolations().iterator().next().getMessageTemplate());
         } else {
-            responseData.put("errCode", EmError.UNKNOWN_ERROR.getErrCode());
-            responseData.put("errMsg", EmError.UNKNOWN_ERROR.getErrMsg());
+            responseData.put(ERROR_CODE, EmError.UNKNOWN_ERROR.getErrCode());
+            responseData.put(ERROR_MSG, EmError.UNKNOWN_ERROR.getErrMsg());
         }
 
         return R.error(responseData);

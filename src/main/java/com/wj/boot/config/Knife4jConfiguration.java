@@ -23,7 +23,7 @@ public class Knife4jConfiguration {
 
     @Bean(value = "defaultApi2")
     public Docket defaultApi2() {
-        Docket docket=new Docket(DocumentationType.SWAGGER_2)
+        return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(new ApiInfoBuilder()
                         .title("my-boot")
                         .description("# spring-boot 项目基础架构")
@@ -36,7 +36,5 @@ public class Knife4jConfiguration {
                 .apis(RequestHandlerSelectors.basePackage("com.wj.boot.controller"))
                 .paths(PathSelectors.any())
                 .build();
-        return docket;
     }
-
 }

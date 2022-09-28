@@ -44,9 +44,6 @@ public class R<T>  implements Serializable {
 
     public static <T> R<T> error(T data) {
         ApiErrorCode aec = ApiErrorCode.FAILED;
-        if (data instanceof Boolean && Boolean.FALSE.equals(data)) {
-            aec = ApiErrorCode.FAILED;
-        }
         return restResult(data, aec);
     }
 
