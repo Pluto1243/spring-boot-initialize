@@ -2,9 +2,12 @@ package com.wj.boot.config.log;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.wj.boot.exception.CommonException;
+import com.wj.boot.exception.EmError;
 import com.wj.boot.mapper.LogMapper;
 import com.wj.boot.utils.BrowserAndIPUtils;
 import com.wj.boot.utils.JwtTokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -31,6 +34,7 @@ import java.util.*;
  **/
 @Aspect
 @Configuration
+@Slf4j
 public class LogAspect {
 
     @Autowired
@@ -62,10 +66,8 @@ public class LogAspect {
      */
     @Pointcut("@annotation(com.wj.boot.config.log.LogAnnotation)")
     private void logPoint() {
-
+        log.info("-----------------enter point cut-------------------");
     }
-
-    ;
 
     /**
      * 切面前置方法
@@ -74,36 +76,42 @@ public class LogAspect {
      * @date 10:30 2022年05月09日
      **/
     @Before(value = "logPoint()")
-    void logBefore(JoinPoint point) throws Exception {
-        initLogEntity();
+    void logBefore(JoinPoint point) {
+        try {
+            initLogEntity();
 
-        // 将记录日志实体放到map里，K为切点方法的hashcode，V为实体
-        // 取得切面方法的hashcode
-        final MethodSignature sign = (MethodSignature) point.getSignature();
-        final Method method = sign.getMethod();
-        final Integer hashCode = method.hashCode();
-        // 获取方法上的注解信息
-        LogAnnotation annotation = getAnnotation(point);
-        final String tableName = annotation.tableName();
-        final OperateType operateType = annotation.operateType();
-        final Integer paramOrder = annotation.paramOrder();
-        Parameter[] parameters = method.getParameters();
-        // 入参大于0, 根据类型填充log实体
-        if (parameters.length > 0) {
-            Parameter parameter = parameters[paramOrder];
-            Class<?> type = parameter.getType();
-            // 获得方法的入参
-            Object[] args = point.getArgs();
-            // 删除操作会提前查询一次，记录到旧值里
-            // 修改操作会提前查询一次，并且修改后也会查询一次，分别记录到旧值和新值里
-            if (OperateType.DELETE == operateType || OperateType.UPDATE == operateType) {
-                getOldValueByMapper(type, args[paramOrder], tableName);
-            } else if (OperateType.PATCH_DELETE == operateType || OperateType.PATCH_UPDATE == operateType) {
-                getPatchOldValueByMapper(type, args[paramOrder], tableName);
+            // 将记录日志实体放到map里，K为切点方法的hashcode，V为实体
+            // 取得切面方法的hashcode
+            final MethodSignature sign = (MethodSignature) point.getSignature();
+            final Method method = sign.getMethod();
+            final Integer hashCode = method.hashCode();
+            // 获取方法上的注解信息
+            LogAnnotation annotation = getAnnotation(point);
+            final String tableName = annotation.tableName();
+            final OperateType operateType = annotation.operateType();
+            final Integer paramOrder = annotation.paramOrder();
+            Parameter[] parameters = method.getParameters();
+            // 入参大于0, 根据类型填充log实体
+            if (parameters.length > 0) {
+                Parameter parameter = parameters[paramOrder];
+                Class<?> type = parameter.getType();
+                // 获得方法的入参
+                Object[] args = point.getArgs();
+                // 删除操作会提前查询一次，记录到旧值里
+                // 修改操作会提前查询一次，并且修改后也会查询一次，分别记录到旧值和新值里
+                if (OperateType.DELETE == operateType || OperateType.UPDATE == operateType) {
+                    getOldValueByMapper(type, args[paramOrder], tableName);
+                } else if (OperateType.PATCH_DELETE == operateType || OperateType.PATCH_UPDATE == operateType) {
+                    getPatchOldValueByMapper(type, args[paramOrder], tableName);
+                }
             }
+            // 执行完后存入Map
+            logMap.put(hashCode, logEntity);
         }
-        // 执行完后存入Map
-        logMap.put(hashCode, logEntity);
+        catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new CommonException(EmError.LOG_FAILD);
+        }
     }
 
     @AfterReturning(pointcut = "logPoint()", returning = "returnValue")
@@ -161,13 +169,13 @@ public class LogAspect {
         }
         if (returnValue != null) {
             if (returnValue instanceof List) {
-                if (((List<?>) returnValue).size() > 0) {
+                if (!((List<?>) returnValue).isEmpty()) {
                     logEntity.setResult(true);
                 } else {
                     logEntity.setResult(false);
                 }
             } else if (returnValue instanceof Boolean) {
-                if ((Boolean) returnValue) {
+                if ((boolean) returnValue) {
                     logEntity.setResult(true);
                 } else {
                     logEntity.setResult(false);
@@ -184,7 +192,7 @@ public class LogAspect {
         } else {
             logEntity.setResult(true);
         }
-        System.out.println("记录日志: [ " + JSONObject.toJSON(logEntity) + " ]");
+        log.info("记录日志: [ " + JSONObject.toJSON(logEntity) + " ]");
         logMapper.insert(logEntity);
         // 保存日志后清除log实体
         logMap.remove(method.hashCode());
@@ -196,22 +204,28 @@ public class LogAspect {
      * @author wangjie
      * @date 11:27 2022年05月09日
      **/
-    void getOldValueByMapper(Class type, Object arg, String tableName) throws Exception {
+    void getOldValueByMapper(Class<?> type, Object arg, String tableName) {
         TreeMap<Object, Object> treeMap;
 
-        // 当type为int或者Integer类型时，直接查询数据库，否则一定是对象，直接使用对象中的id字段查询
-        if ("Integer" == type.getSimpleName() || "int" == type.getSimpleName()) {
-            // 从数据库查出旧数据
-            treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + arg);
-        } else {
-            Object convert = ConvertUtils.convert(arg, type);
-            Field id = convert.getClass().getDeclaredField("id");
-            // 设置允许访问
-            id.setAccessible(true);
-            // 从数据库查出旧数据
-            treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id.get(convert));
+        try {
+            // 当type为int或者Integer类型时，直接查询数据库，否则一定是对象，直接使用对象中的id字段查询
+            if (Integer.TYPE.isInstance(type.getSimpleName())) {
+                // 从数据库查出旧数据
+                treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + arg);
+            } else {
+                Object convert = ConvertUtils.convert(arg, type);
+                Field id = convert.getClass().getDeclaredField("id");
+                // 设置允许访问
+                id.setAccessible(true);
+                // 从数据库查出旧数据
+                treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id.get(convert));
+            }
+            logEntity.setOldValue(JSONObject.toJSONString(treeMap));
         }
-        logEntity.setOldValue(JSONObject.toJSONString(treeMap));
+        catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new CommonException(EmError.LOG_FAILD);
+        }
     }
 
     /**
@@ -220,28 +234,30 @@ public class LogAspect {
      * @author wangjie
      * @date 11:27 2022年05月09日
      **/
-    void getPatchOldValueByMapper(Class type, Object arg, String tableName) throws Exception {
-        List<TreeMap<Object, Object>> treeMaps = new ArrayList<>();
+    void getPatchOldValueByMapper(Class<?> type, Object arg, String tableName) {
+        try {
+            List<TreeMap<Object, Object>> treeMaps = new ArrayList<>();
 
-        // TODO 批量操作目前是包含idList的对象或者为List的id集合——此段代码可根据项目变化灵活修改
-        if ("List" == type.getSimpleName()) {
-            List ids = (ArrayList) arg;
-            // 从数据库查出旧数据
-            ids.forEach(id -> {
-                treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id));
-            });
-        } else {
-            Object convert = ConvertUtils.convert(arg, type);
-            Field idList = convert.getClass().getDeclaredField("id");
-            // 设置允许访问
-            idList.setAccessible(true);
-            List<Integer> ids = (List<Integer>) idList.get(convert);
-            ids.forEach(id -> {
+            // TODO 批量操作目前是包含idList的对象或者为List的id集合——此段代码可根据项目变化灵活修改
+            if ("List".equals(type.getSimpleName())) {
+                List<Integer> ids = (ArrayList) arg;
                 // 从数据库查出旧数据
-                treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id));
-            });
+                ids.forEach(id -> treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id)));
+            } else {
+                Object convert = ConvertUtils.convert(arg, type);
+                Field idList = convert.getClass().getDeclaredField("id");
+                // 设置允许访问
+                idList.setAccessible(true);
+                List<Integer> ids = (List<Integer>) idList.get(convert);
+                // 从数据库查出旧数据
+                ids.forEach(id -> treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id)));
+            }
+            logEntity.setOldValue(JSONArray.toJSONString(treeMaps));
         }
-        logEntity.setOldValue(JSONArray.toJSONString(treeMaps));
+        catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new CommonException(EmError.LOG_FAILD);
+        }
     }
 
     /**
@@ -250,21 +266,27 @@ public class LogAspect {
      * @author wangjie
      * @date 14:40 2022年05月09日
      **/
-    void getNewValueByMapper(Class type, Object arg, String tableName) throws Exception {
-        TreeMap<Object, Object> treeMap;
-        // 当type为int或者Integer类型时，直接查询数据库，否则一定是对象，直接使用对象中的id字段查询
-        if ("Integer" == type.getSimpleName() || "int" == type.getSimpleName()) {
-            // 从数据库查出旧数据
-            treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + arg);
-        } else {
-            Object convert = ConvertUtils.convert(arg, type);
-            Field id = convert.getClass().getDeclaredField("id");
-            // 设置允许访问
-            id.setAccessible(true);
-            // 从数据库查出新数据
-            treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id.get(convert));
+    void getNewValueByMapper(Class<?> type, Object arg, String tableName) {
+        try {
+            TreeMap<Object, Object> treeMap;
+            // 当type为int或者Integer类型时，直接查询数据库，否则一定是对象，直接使用对象中的id字段查询
+            if ("Integer".equals(type.getSimpleName()) || "int".equals(type.getSimpleName())) {
+                // 从数据库查出旧数据
+                treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + arg);
+            } else {
+                Object convert = ConvertUtils.convert(arg, type);
+                Field id = convert.getClass().getDeclaredField("id");
+                // 设置允许访问
+                id.setAccessible(true);
+                // 从数据库查出新数据
+                treeMap = logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id.get(convert));
+            }
+            logEntity.setNewValue(JSONObject.toJSONString(treeMap));
         }
-        logEntity.setNewValue(JSONObject.toJSONString(treeMap));
+        catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new CommonException(EmError.LOG_FAILD);
+        }
     }
 
     /**
@@ -273,28 +295,31 @@ public class LogAspect {
      * @author wangjie
      * @date 11:27 2022年05月09日
      **/
-    void getPatchNewValueByMapper(Class type, Object arg, String tableName) throws Exception {
-        List<TreeMap<Object, Object>> treeMaps = new ArrayList<>();
+    void getPatchNewValueByMapper(Class<?> type, Object arg, String tableName) {
 
-        // TODO 批量操作目前是包含idList的对象或者为List的id集合——此段代码可根据项目变化灵活修改
-        if ("List" == type.getSimpleName()) {
-            List ids = (ArrayList) arg;
-            ids.forEach(id -> {
+        try {
+            List<TreeMap<Object, Object>> treeMaps = new ArrayList<>();
+
+            // TODO 批量操作目前是包含idList的对象或者为List的id集合——此段代码可根据项目变化灵活修改
+            if ("List".equals(type.getSimpleName())) {
+                List<Integer> ids = (ArrayList) arg;
                 // 从数据库查出旧数据
-                treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id));
-            });
-        } else {
-            Object convert = ConvertUtils.convert(arg, type);
-            Field idList = convert.getClass().getDeclaredField("id");
-            // 设置允许访问
-            idList.setAccessible(true);
-            List<Integer> ids = (List<Integer>) idList.get(convert);
-            ids.forEach(id -> {
+                ids.forEach(id -> treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id)));
+            } else {
+                Object convert = ConvertUtils.convert(arg, type);
+                Field idList = convert.getClass().getDeclaredField("id");
+                // 设置允许访问
+                idList.setAccessible(true);
+                List<Integer> ids = (List<Integer>) idList.get(convert);
                 // 从数据库查出新数据
-                treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id));
-            });
+                ids.forEach(id -> treeMaps.add(logMapper.executeSql("SELECT * FROM " + tableName + " WHERE ID = " + id)));
+            }
+            logEntity.setNewValue(JSONArray.toJSONString(treeMaps));
         }
-        logEntity.setNewValue(JSONArray.toJSONString(treeMaps));
+        catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new CommonException(EmError.LOG_FAILD);
+        }
     }
 
     /**

@@ -8,6 +8,8 @@ package com.wj.boot.exception;
  **/
 @SuppressWarnings("AlibabaEnumConstantsMustHaveComment")
 public enum EmError implements CommonError {
+    LOG_FAILD(10014, "日志记录错误"),
+
     LOGOUT_FAILD(10013, "退出登录失败"),
 
     LOGIN_FAILD(10012, "登录失败，请检查用户名或密码是否正确"),

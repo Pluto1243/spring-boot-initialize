@@ -10,5 +10,5 @@ import java.util.TreeMap;
 @Mapper
 public interface LogMapper extends BaseMapper<LogEntity> {
 
-    TreeMap executeSql(@Param("sql") String sql);
+    TreeMap<Object, Object> executeSql(@Param("sql") String sql);
 }
