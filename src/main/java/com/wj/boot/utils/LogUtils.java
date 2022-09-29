@@ -29,7 +29,7 @@ public class LogUtils {
         String methodName = stackTraceElement.getMethodName();
         log.error("方法:" + className + "." + methodName + " | " +
                 "参数:" + stackTraceElement + " | " + "错误行：" + lineNumber + " | " +
-                "时间:" + " | " + new Date() + " | " + "异常内容:" + ex.toString()
+                "时间:" + " | " + new Date() + " | " + "异常内容:" + ex
         );
     }
 
@@ -51,9 +51,9 @@ public class LogUtils {
                 builder.append(o);
             }
         }
-        log.error("方法:" + signature + " | " + "参数:" + builder.toString() +
+        log.error("方法:" + signature + " | " + "参数:" + builder +
                 " | " + "错误行：" + lineNumber + " | " + "时间:" + new Date() +
-                " | " + "异常内容:" + ex.toString()
+                " | " + "异常内容:" + ex
         );
     }
 }

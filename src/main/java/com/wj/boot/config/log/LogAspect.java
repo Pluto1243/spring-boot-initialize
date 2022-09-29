@@ -78,7 +78,9 @@ public class LogAspect {
     @Before(value = "logPoint()")
     void logBefore(JoinPoint point) {
         try {
+
             initLogEntity();
+            logEntity.getStopWatch().start();
 
             // 将记录日志实体放到map里，K为切点方法的hashcode，V为实体
             // 取得切面方法的hashcode
@@ -115,7 +117,7 @@ public class LogAspect {
     }
 
     @AfterReturning(pointcut = "logPoint()", returning = "returnValue")
-    void logAdvice(JoinPoint point, Object returnValue) throws Exception {
+    void logAdvice(JoinPoint point, Object returnValue) {
         MethodSignature sign = (MethodSignature) point.getSignature();
         // 获取方法
         Method method = sign.getMethod();
@@ -143,7 +145,7 @@ public class LogAspect {
         // 当前时间
         logEntity.setLogAt(new Date());
         // 设置ip地址
-        logEntity.setIp(BrowserAndIPUtils.getBrowserAndIP(request));
+        logEntity.setIp(BrowserAndIPUtils.getIP(request));
         // 设置请求头信息
         logEntity.setRequestHeader(request.getHeader("User-Agent"));
 
@@ -192,7 +194,9 @@ public class LogAspect {
         } else {
             logEntity.setResult(true);
         }
-        log.info("记录日志: [ " + JSONObject.toJSON(logEntity) + " ]");
+        logEntity.getStopWatch().stop();
+        log.info("记录日志: [ " + JSONObject.toJSON(logEntity) + " ]; 耗时："
+                + logEntity.getStopWatch().getLastTaskTimeMillis() + " 毫秒");
         logMapper.insert(logEntity);
         // 保存日志后清除log实体
         logMap.remove(method.hashCode());

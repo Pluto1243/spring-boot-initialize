@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.wj.boot.mapper.LogMapper">
-  <parameterMap id="Log" type="com.wj.boot.config.log.LogEntity"/>
-  <resultMap id="Log" type="com.wj.boot.config.log.LogEntity"/>
+    <parameterMap id="Log" type="com.wj.boot.config.log.LogEntity"/>
+    <resultMap id="Log" type="com.wj.boot.config.log.LogEntity"/>
 
-  <select id="executeSql" resultType="java.util.TreeMap">
-    ${sql}
-  </select>
+    <select id="executeSql" resultType="java.util.TreeMap">
+        ${sql}
+    </select>
 
-  <insert id="saveLog" parameterMap="Log">
-    INSERT INTO `log_info`
-        (uid, operateType, description, tableName, oldValue, newValue, ip, requestHeader, result)
-    VALUES (#{uid}, #{operateType}, #{description}, #{tableName}, #{oldValue}, #{newValue}, #{ip},
-            #{requestHeader}, #{result})
-  </insert>
+    <insert id="saveLog" parameterMap="Log">
+        INSERT INTO `log_info`
+            (uid, operateType, description, tableName, oldValue, newValue, ip, requestHeader, result)
+        VALUES (#{uid}, #{operateType}, #{description}, #{tableName}, #{oldValue}, #{newValue}, #{ip},
+                #{requestHeader}, #{result})
+    </insert>
 </mapper>

@@ -37,19 +37,18 @@ public class SignInterceptor implements HandlerInterceptor {
      */
     @Override
     @ResponseBody
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 验证用户是否登录
         final String token = request.getHeader("token");
-        if (token == null){
+        if (token == null) {
             throw new CommonException(EmError.LOGIN_EXPIRED);
         }
         final String account = jwtTokenUtil.getUsernameFromToken(token);
-        if (account == null){
+        if (account == null) {
             throw new CommonException(EmError.LOGIN_EXPIRED);
         }
         final User user = userService.getUserByAccount(account);
-        if (user == null){
+        if (user == null) {
             throw new CommonException(EmError.LOGIN_EXPIRED);
         }
         return true;
@@ -60,8 +59,7 @@ public class SignInterceptor implements HandlerInterceptor {
      * 此时我们可以通过modelAndView对模型数据进行处理或对视图进行处理
      */
     @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-                           ModelAndView modelAndView) throws Exception {
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
 
     }
 
@@ -72,8 +70,7 @@ public class SignInterceptor implements HandlerInterceptor {
      * 但仅调用处理器执行链中
      */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-            throws Exception {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
 
     }
 }

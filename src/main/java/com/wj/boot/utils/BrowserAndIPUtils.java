@@ -13,8 +13,7 @@ public class BrowserAndIPUtils {
 
     private static final String UNKNOW = "unknow";
 
-    public static String getBrowserAndIP(HttpServletRequest request) {
-        String browser = request.getHeader("User-Agent");
+    public static String getIP(HttpServletRequest request) {
         String loginIp = request.getHeader("X-Forwarded-For");
         if (loginIp == null || loginIp.isEmpty() || UNKNOW == loginIp) {
             loginIp = request.getHeader("PRoxy-Client-IP");
@@ -31,6 +30,6 @@ public class BrowserAndIPUtils {
         if (loginIp == null || loginIp.isEmpty() || UNKNOW == loginIp) {
             loginIp = request.getRemoteAddr();
         }
-        return EncryptionUtils.md5Encode(loginIp + browser);
+        return loginIp;
     }
 }

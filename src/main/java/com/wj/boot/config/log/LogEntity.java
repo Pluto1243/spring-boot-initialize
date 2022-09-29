@@ -1,8 +1,10 @@
 package com.wj.boot.config.log;
 
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.util.StopWatch;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -40,6 +42,9 @@ public class LogEntity implements Serializable {
     private Boolean result;
 
     private Date logAt;
+
+    @TableField(exist = false)
+    private StopWatch stopWatch = new StopWatch(Thread.currentThread().getName());
 
     @Override
     public String toString() {
