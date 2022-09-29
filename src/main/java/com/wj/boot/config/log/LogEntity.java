@@ -46,6 +46,8 @@ public class LogEntity implements Serializable {
     @TableField(exist = false)
     private StopWatch stopWatch = new StopWatch(Thread.currentThread().getName());
 
+    private Long time;
+
     @Override
     public String toString() {
         return "LogEntity{" +

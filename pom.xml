@@ -23,6 +23,7 @@
     <spring-security.version>5.4.5</spring-security.version>
     <commons.version>1.9.4</commons.version>
     <bind.version>2.3.1</bind.version>
+    <rocketMq.version>2.1.1</rocketMq.version>
   </properties>
   <dependencies>
     <dependency>
@@ -44,6 +45,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+    </dependency>
+    <!-- rocketMq -->
+    <dependency>
+      <groupId>org.apache.rocketmq</groupId>
+      <artifactId>rocketmq-spring-boot-starter</artifactId>
+      <version>${rocketMq.version}</version>
     </dependency>
     <dependency>
       <groupId>mysql</groupId>

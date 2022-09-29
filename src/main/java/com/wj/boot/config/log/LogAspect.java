@@ -9,6 +9,9 @@ import com.wj.boot.utils.BrowserAndIPUtils;
 import com.wj.boot.utils.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,6 +19,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -33,6 +37,7 @@ import java.util.*;
  * @date 16:51 2022年05月07日
  **/
 @Aspect
+@ConditionalOnProperty(prefix = "log-config", value = "enable", matchIfMissing = true)
 @Configuration
 @Slf4j
 public class LogAspect {
@@ -44,6 +49,14 @@ public class LogAspect {
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private LogConfig logConfig;
+
+    @Autowired
+    private RocketMQTemplate rocketMQTemplate;
+
+    private static final String LOG_TOPIC = "log";
 
     /**
      * @param
@@ -195,9 +208,25 @@ public class LogAspect {
             logEntity.setResult(true);
         }
         logEntity.getStopWatch().stop();
+        logEntity.setTime(logEntity.getStopWatch().getLastTaskTimeMillis());
         log.info("记录日志: [ " + JSONObject.toJSON(logEntity) + " ]; 耗时："
-                + logEntity.getStopWatch().getLastTaskTimeMillis() + " 毫秒");
-        logMapper.insert(logEntity);
+                + logEntity.getTime() + " 毫秒");
+        if (logConfig.getMqEnable()) {
+            rocketMQTemplate.asyncSend(LOG_TOPIC, JSONObject.toJSONString(logEntity), new SendCallback() {
+                //消息发送成功的回调
+                @Override
+                public void onSuccess(SendResult sendResult) {
+                    log.info(sendResult.toString());
+                }
+                //消息发送失败的回调
+                @Override
+                public void onException(Throwable throwable) {
+                    throw new CommonException(EmError.LOG_FAILD);
+                }
+            });
+        } else {
+            logMapper.insert(logEntity);
+        }
         // 保存日志后清除log实体
         logMap.remove(method.hashCode());
     }
