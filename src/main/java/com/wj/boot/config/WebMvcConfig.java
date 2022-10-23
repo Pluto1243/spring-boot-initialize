@@ -53,6 +53,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         patterns.add("/swagger-resources/**");
         // 需要放开用户登录接口
         patterns.add("/user/**");
+        patterns.add("/test/**");
         registry.addInterceptor(signInterceptor)
                 .excludePathPatterns(patterns);
     }

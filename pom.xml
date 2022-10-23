@@ -17,7 +17,7 @@
     <java.version>11</java.version>
     <knife4j.version>3.0.2</knife4j.version>
     <mybatis-plus.version>3.5.1</mybatis-plus.version>
-    <hibernate-validator.version>6.1.5.FINAL</hibernate-validator.version>
+    <hibernate-validator.version>6.2.0.FINAL</hibernate-validator.version>
     <fastjson.version>1.2.62</fastjson.version>
     <jwt.version>0.7.0</jwt.version>
     <spring-security.version>5.4.5</spring-security.version>
@@ -78,7 +78,8 @@
     <dependency>
       <groupId>org.hibernate.validator</groupId>
       <artifactId>hibernate-validator</artifactId>
-      <version>${hibernate-validator.version}</version>
+      <version>6.2.0.Final</version>
+      <type>pom</type>
     </dependency>
     <!--JWT-->
     <dependency>
@@ -108,6 +109,16 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
       <version>${bind.version}</version>
+    </dependency>
+    <!-- mongodb -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-mongodb</artifactId>
+    </dependency>
+    <!-- hutool -->
+    <dependency>
+      <groupId>cn.hutool</groupId>
+      <artifactId>hutool-all</artifactId>
     </dependency>
   </dependencies>
 

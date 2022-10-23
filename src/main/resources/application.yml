@@ -15,6 +15,11 @@ spring:
   lifecycle:
     # 最大等待时间
     timeout-per-shutdown-phase: 30s
+  data:
+    mongodb:
+      database: test
+      host: localhost
+      port: 27017
 
 # mybatis-plus配置
 mybatis-plus:
